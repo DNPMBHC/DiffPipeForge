@@ -194,6 +194,23 @@ app.whenReady().then(() => {
   });
 
   ipcMain.handle('quit-and-install', () => {
+    // Gracefully shutdown all child processes
+    console.log("[AutoUpdate] Preparing to restart for update...");
+    if (activeBackendProcess) {
+      // @ts-ignore
+      activeBackendProcess.kill();
+      activeBackendProcess = null;
+    }
+    if (activeTensorboardProcess) {
+      // @ts-ignore
+      activeTensorboardProcess.kill();
+      activeTensorboardProcess = null;
+    }
+    if (activeToolProcess) {
+      activeToolProcess.kill();
+      activeToolProcess = null;
+    }
+
     // Disable silent install to show full installer UI (allows directory selection)
     autoUpdater.quitAndInstall(false, true);
   });
