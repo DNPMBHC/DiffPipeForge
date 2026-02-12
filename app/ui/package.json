@@ -2,6 +2,11 @@
   "name": "diffpipe-forge",
   "private": true,
   "version": "1.3.3",
+  "author": {
+    "name": "TianDongL",
+    "email": "crazylu1654@gmail.com"
+  },
+  "homepage": "https://github.com/TianDongL/DiffPipeForge",
   "type": "module",
   "scripts": {
     "dev": "vite",
