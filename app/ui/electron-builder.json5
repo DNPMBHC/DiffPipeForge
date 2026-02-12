@@ -77,7 +77,8 @@
     "artifactName": "${productName}-${version}-Mac.${ext}"
   },
   "linux": {
-    "target": ["AppImage"],
-    "artifactName": "${productName}-${version}-Linux.${ext}"
+    "target": ["AppImage", "deb"],
+    "artifactName": "${productName}-${version}-Linux.${ext}",
+    "category": "Utility"
   }
 }
