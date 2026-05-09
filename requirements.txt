@@ -42,3 +42,6 @@ qwen-vl-utils
 modelscope
 huggingface_hub
 alibabacloud_oss_v2
+comfy-kitchen
+comfy-aimdo
+scipy

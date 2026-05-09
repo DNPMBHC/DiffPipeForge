@@ -1,7 +1,5 @@
 import argparse
 import os
-import sys
-sys.modules["comfy_kitchen"] = None
 
 #for windows===========================================================================
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -388,6 +386,9 @@ if __name__ == '__main__':
     elif model_type == 'flux2':
         from models import flux2
         model = flux2.Flux2Pipeline(config)
+    elif model_type == 'ernie_image':
+        from models import ernie_image
+        model = ernie_image.ErnieImagePipeline(config)
     else:
         raise NotImplementedError(f'Model type {model_type} is not implemented')
 
@@ -539,24 +540,27 @@ if __name__ == '__main__':
     else:
         is_adapter = False
 
-    # if this is a new run, create a new dir for it
+    # Determine run_dir on rank 0 and broadcast it
+    run_dir_container = [None]
+    if is_main_process():
+        if resume_from_checkpoint is True:
+            run_dir_container[0] = get_most_recent_run_dir(config['output_dir'])
+        elif isinstance(resume_from_checkpoint, str):
+            run_dir_container[0] = os.path.join(config['output_dir'], resume_from_checkpoint)
+        else:
+            run_dir_container[0] = os.path.join(config['output_dir'], datetime.now(timezone.utc).strftime('%Y%m%d_%H-%M-%S'))
+    
+    torch.distributed.broadcast_object_list(run_dir_container, src=0, group=dist.get_world_group())
+    run_dir = run_dir_container[0]
+
+    os.makedirs(run_dir, exist_ok=True)
     if not resume_from_checkpoint and is_main_process():
-        run_dir = os.path.join(config['output_dir'], datetime.now(timezone.utc).strftime('%Y%m%d_%H-%M-%S'))
-        os.makedirs(run_dir, exist_ok=True)
+
         shutil.copy(args.config, run_dir)
         shutil.copy(config['dataset'], run_dir)
         for eval_dataset in config['eval_datasets']:
             shutil.copy(eval_dataset['config'], run_dir)
-    # wait for all processes then get the most recent dir (may have just been created)
     dist.barrier()
-    if resume_from_checkpoint is True:  # No specific folder provided, use most recent
-        run_dir = get_most_recent_run_dir(config['output_dir'])
-    elif isinstance(resume_from_checkpoint, str):  # Specific folder provided
-        run_dir = os.path.join(config['output_dir'], resume_from_checkpoint)
-        if not os.path.exists(run_dir):
-            raise ValueError(f"Checkpoint directory {run_dir} does not exist")
-    else:  # Not resuming, use most recent (newly created) dir
-        run_dir = get_most_recent_run_dir(config['output_dir'])
 
     # WandB logging
     wandb_enable = config.get('monitoring', {}).get('enable_wandb', False)
@@ -819,6 +823,8 @@ if __name__ == '__main__':
         lr_scheduler = torch.optim.lr_scheduler.ConstantLR(optimizer, factor=1.0)
     elif scheduler_type == 'linear':
         lr_scheduler = torch.optim.lr_scheduler.LinearLR(optimizer, start_factor=1.0, end_factor=0.0, total_iters=config['epochs'] * steps_per_epoch)
+    elif scheduler_type == 'cosine':
+        lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=config['epochs'] * steps_per_epoch, eta_min=1e-6)
     else:
         raise NotImplementedError(f'Unknown lr_scheduler: {scheduler_type}')
     if config['warmup_steps'] > 0:
