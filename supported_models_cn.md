@@ -628,3 +628,20 @@ llm_adapter_lr = 0
   - 如果你将 LoRA 上传到公共平台，请务必注明它是基于预览版训练的，以免用户因其在正式版上表现不佳而感到困惑。
 Anima LoRA 以 ComfyUI 格式保存。
 
+
+## Ernie-Image
+```
+[model]
+type = 'ernie_image'
+diffusion_model = '/data2/imagegen_models/comfyui-models/ernie-image.safetensors'
+vae = '/home/anon/ComfyUI/models/vae/flux2-vae.safetensors'
+text_encoders = [
+    {path = '/data2/imagegen_models/comfyui-models/ministral-3-3b.safetensors', type = 'flux2'}
+]
+dtype = 'bfloat16'
+diffusion_model_dtype = 'float8'  # 显存高的话可以删除
+timestep_sample_method = 'logit_normal'
+shift = 3  # 可能适用于任何带有Flux2 VAE的模型
+```
+
+使用与ComfyUI兼容的模型文件。LoRA以ComfyUI格式保存。

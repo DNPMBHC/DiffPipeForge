@@ -664,6 +664,7 @@ export function ModelTrainingPage({
                     case 'flux2':
                     case 'z_image':
                     case 'hunyuan_video_15':
+                    case 'ernie_image':
                         lines.push(`diffusion_model = '${(m.diffusion_model ?? m.diffusion_path ?? '').replace(/\\/g, '/')}'`);
                         lines.push(`vae = '${(m.vae ?? m.vae_path ?? '').replace(/\\/g, '/')}'`);
                         lines.push(`shift = ${formatValue(m.shift || 1)}`);

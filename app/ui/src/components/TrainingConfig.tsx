@@ -47,7 +47,8 @@ export function TrainingConfig({ data, modelType, onChange, validationEnabled = 
                         onChange={handleChange}
                         options={[
                             { label: 'Constant', value: 'constant' },
-                            { label: 'Linear', value: 'linear' }
+                            { label: 'Linear', value: 'linear' },
+                            { label: 'Cosine', value: 'cosine' }
                         ]}
                     />
 

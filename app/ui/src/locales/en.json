@@ -600,7 +600,7 @@
         "micro_batch_size_per_gpu": "The mini-batch size for a single forward/backward pass on the GPU. Increasing this speeds up training but consumes more VRAM.",
         "gradient_accumulation_steps": "Number of steps to accumulate gradients. This allows for larger effective batch sizes under limited VRAM. Effective Batch Size = Batch Size * Accumulation Steps * Num GPUs.",
         "warmup_steps": "Number of steps for learning rate warmup. Gradually increases the LR at the start to improve stability. Usually set to ~5% of total steps.",
-        "lr_scheduler": "Type of learning rate scheduler. 'constant' keeps it fixed, 'linear' decreases it to 0 as training progresses.",
+        "lr_scheduler": "Type of learning rate scheduler. 'constant' keeps it fixed, 'linear' decreases it to 0 as training progresses, 'cosine' follows a cosine decay curve to a minimum LR (smoother decay, generally better results).",
         "blocks_to_swap": "Offloads some model blocks to system memory to save VRAM. Higher values reduce VRAM usage but significantly slow down training, each model at least has 2 blocks in VRAM.",
         "activation_checkpointing": "Saves VRAM by recomputing intermediate activations. Recommended to keep enabled unless you have plenty of VRAM and need max speed,you can also use unsloth to save more VRAM.",
         "output_name": "The name of the folder where the trained models will be saved.",
