@@ -76,7 +76,23 @@ process.on('uncaughtException', (error) => {
 
 process.env.APP_ROOT = path.join(__dirname, '..')
 
-export const VITE_DEV_SERVER_URL = process.env['VITE_DEV_SERVER_URL']
+function normalizeDevServerUrl(url: string | undefined) {
+  if (!url) {
+    return undefined;
+  }
+
+  try {
+    const parsedUrl = new URL(url);
+    if (parsedUrl.hostname === 'localhost') {
+      parsedUrl.hostname = '127.0.0.1';
+    }
+    return parsedUrl.toString();
+  } catch {
+    return url.replace('localhost', '127.0.0.1');
+  }
+}
+
+export const VITE_DEV_SERVER_URL = normalizeDevServerUrl(process.env['VITE_DEV_SERVER_URL'])
 export const MAIN_DIST = path.join(process.env.APP_ROOT, 'dist-electron')
 export const RENDERER_DIST = path.join(process.env.APP_ROOT, 'dist')
 
