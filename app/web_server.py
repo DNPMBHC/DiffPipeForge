@@ -47,6 +47,12 @@ class IPCHandler(http.server.BaseHTTPRequestHandler):
         if channel == 'get-language':
             settings = self.load_settings()
             return settings.get('language', 'zh')
+
+        elif channel == 'set-language':
+            settings = self.load_settings()
+            settings['language'] = args[0] if args else 'zh'
+            self.save_settings(settings)
+            return {"success": True}
         
         elif channel == 'get-theme':
             settings = self.load_settings()
