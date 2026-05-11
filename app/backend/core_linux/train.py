@@ -165,16 +165,6 @@ def _parse_layer_offloading_percent(value):
 
 
 def _resolve_blocks_to_swap(config, model):
-    raw_blocks_to_swap = config.get('blocks_to_swap', 0)
-    try:
-        explicit_blocks_to_swap = int(raw_blocks_to_swap)
-    except (TypeError, ValueError):
-        explicit_blocks_to_swap = 0
-    explicit_blocks_to_swap = max(0, explicit_blocks_to_swap)
-
-    if explicit_blocks_to_swap > 0:
-        return explicit_blocks_to_swap, False, None
-
     model_config = config.get('model', {})
     layer_offloading = _parse_bool(
         config.get('layer_offloading', model_config.get('layer_offloading', False))
@@ -199,9 +189,19 @@ def _resolve_blocks_to_swap(config, model):
     if transformer_offload_percent > 0:
         print(
             f'MemoryManager enabled (percent={transformer_offload_percent}). '
-            'Disabling auto-Block Swapping to prevent conflict.'
+            'Disabling Block Swapping to prevent conflict.'
         )
         return 0, False, None
+
+    raw_blocks_to_swap = config.get('blocks_to_swap', 0)
+    try:
+        explicit_blocks_to_swap = int(raw_blocks_to_swap)
+    except (TypeError, ValueError):
+        explicit_blocks_to_swap = 0
+    explicit_blocks_to_swap = max(0, explicit_blocks_to_swap)
+
+    if explicit_blocks_to_swap > 0:
+        return explicit_blocks_to_swap, False, None
 
     layer_offloading_percent = _parse_layer_offloading_percent(layer_offloading_percent_value)
     if not layer_offloading or layer_offloading_percent <= 0:

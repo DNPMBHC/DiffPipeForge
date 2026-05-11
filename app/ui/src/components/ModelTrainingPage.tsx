@@ -379,6 +379,13 @@ export function ModelTrainingPage({
             output_dir: finalOutputDir
         };
 
+        if (fullConfig.layer_offloading) {
+            delete fullConfig.blocks_to_swap;
+        } else {
+            delete fullConfig.layer_offloading_percent;
+            delete fullConfig.layer_offloading_text_encoder_percent;
+        }
+
         // Remove undefined/empty/zero numericals for cleanliness (except specific keys)
         Object.keys(fullConfig).forEach(key => {
             const val = fullConfig[key];

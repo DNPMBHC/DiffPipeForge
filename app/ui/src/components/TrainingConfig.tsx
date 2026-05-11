@@ -86,7 +86,7 @@ export function TrainingConfig({ data, modelType, onChange, validationEnabled = 
                     />
 
                     <GlassInput label={t('training.pipeline_stages')} helpText={t('help.pipeline_stages')} name="pipeline_stages" type="number" value={data.pipeline_stages ?? 1} onChange={handleChange} />
-                    <GlassInput label={t('training.blocks_to_swap')} helpText={t('help.blocks_to_swap')} name="blocks_to_swap" type="number" min={0} value={data.blocks_to_swap ?? 0} onChange={handleChange} />
+                    <GlassInput label={t('training.blocks_to_swap')} helpText={t('help.blocks_to_swap')} name="blocks_to_swap" type="number" min={0} value={data.blocks_to_swap ?? 0} onChange={handleChange} disabled={!!data.layer_offloading} />
                     <div className="flex items-center gap-2 mt-8">
                         <input
                             type="checkbox"
