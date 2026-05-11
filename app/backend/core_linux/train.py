@@ -536,6 +536,32 @@ if __name__ == '__main__':
         eval_data_map[name] = dataset_util.Dataset(eval_dataset_config, model, skip_dataset_validation=args.i_know_what_i_am_doing)
         dataset_manager.register(eval_data_map[name])
 
+    text_encoder_offload_percent = _parse_layer_offloading_percent(
+        config.get('layer_offloading_text_encoder_percent', 0.0)
+    )
+    if world_size > 1 and text_encoder_offload_percent > 0:
+        print(
+            f'Text Encoder MemoryManager disabled because distributed world_size={world_size}. '
+            'Layer offloading is only supported for single-GPU training.'
+        )
+        text_encoder_offload_percent = 0.0
+
+    if text_encoder_offload_percent > 0:
+        text_encoder_modules = [m for m in dataset_manager.text_encoders if isinstance(m, torch.nn.Module)]
+        if text_encoder_modules:
+            for idx, text_encoder_module in enumerate(text_encoder_modules, start=1):
+                print(
+                    f'Enabling MemoryManager for Text Encoder {idx} '
+                    f'with offload_percent={text_encoder_offload_percent}'
+                )
+                MemoryManager.attach(
+                    text_encoder_module,
+                    torch.device('cuda'),
+                    offload_percent=text_encoder_offload_percent,
+                )
+        else:
+            print('Warning: No torch.nn.Module text encoders found for MemoryManager.')
+
     # For testing
 
     # import imageio
@@ -672,6 +698,14 @@ if __name__ == '__main__':
 
     network_offload = config.get('network_layer_offloading', False)
     memory_manager_active = False
+
+    if world_size > 1 and (transformer_offload_percent > 0 or network_offload):
+        print(
+            f'MemoryManager disabled because distributed world_size={world_size}. '
+            'Layer offloading is only supported for single-GPU training.'
+        )
+        transformer_offload_percent = 0.0
+        network_offload = False
 
     if transformer_offload_percent > 0 or network_offload:
         memory_manager_active = True
