@@ -26,6 +26,8 @@ from comfy import model_management
 # Avoids using comfy_kitchen RoPE implementations that don't have backward defined
 model_management.in_training = True
 
+model_management.in_training = True
+
 
 def make_contiguous(*tensors):
     return tuple(x.contiguous() for x in tensors)
