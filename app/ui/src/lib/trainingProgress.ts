@@ -5,6 +5,8 @@ export interface TrainingProgressEstimate {
   totalSteps: number | null;
   source: 'max_steps' | 'dataset_estimate' | 'unknown';
   sampleCount: number | null;
+  imageCount: number | null;
+  videoCount: number | null;
   weightedSampleCount: number | null;
   datasetPath: string | null;
   reason?: string;
@@ -51,6 +53,21 @@ const pushPathValue = (entries: DatasetEntry[], value: unknown, repeats: number)
   }
 };
 
+const countMediaFiles = async (dirPath: string) => {
+  try {
+    const res = await ipc.invoke('list-media', { dirPath, limit: 1 });
+    return {
+      total: toPositiveNumber(res?.total, 0),
+      imageTotal: toPositiveNumber(res?.imageTotal, 0),
+      videoTotal: toPositiveNumber(res?.videoTotal, 0),
+    };
+  } catch {
+    const res = await ipc.invoke('list-images', { dirPath, limit: 1 });
+    const total = toPositiveNumber(res?.total, 0);
+    return { total, imageTotal: total, videoTotal: 0 };
+  }
+};
+
 export const extractDatasetEntries = (datasetConfig: any): DatasetEntry[] => {
   const entries: DatasetEntry[] = [];
 
@@ -79,35 +96,41 @@ export async function estimateTrainingProgress(projectPath: string, trainConfig:
       totalSteps: Math.floor(maxSteps),
       source: 'max_steps',
       sampleCount: null,
+      imageCount: null,
+      videoCount: null,
       weightedSampleCount: null,
       datasetPath: typeof trainConfig.dataset === 'string' ? resolveConfigPath(projectPath, trainConfig.dataset) : null,
     };
   }
 
   if (typeof trainConfig.dataset !== 'string' || !trainConfig.dataset.trim()) {
-    return { totalSteps: null, source: 'unknown', sampleCount: null, weightedSampleCount: null, datasetPath: null, reason: 'missing_dataset_config' };
+    return { totalSteps: null, source: 'unknown', sampleCount: null, imageCount: null, videoCount: null, weightedSampleCount: null, datasetPath: null, reason: 'missing_dataset_config' };
   }
 
   const datasetPath = resolveConfigPath(projectPath, trainConfig.dataset);
   const datasetContent = await ipc.invoke('read-file', datasetPath);
   if (!datasetContent) {
-    return { totalSteps: null, source: 'unknown', sampleCount: null, weightedSampleCount: null, datasetPath, reason: 'dataset_config_unreadable' };
+    return { totalSteps: null, source: 'unknown', sampleCount: null, imageCount: null, videoCount: null, weightedSampleCount: null, datasetPath, reason: 'dataset_config_unreadable' };
   }
 
   const datasetConfig = parse(datasetContent) as any;
   const entries = extractDatasetEntries(datasetConfig);
   if (entries.length === 0) {
-    return { totalSteps: null, source: 'unknown', sampleCount: null, weightedSampleCount: null, datasetPath, reason: 'dataset_paths_missing' };
+    return { totalSteps: null, source: 'unknown', sampleCount: null, imageCount: null, videoCount: null, weightedSampleCount: null, datasetPath, reason: 'dataset_paths_missing' };
   }
 
   let sampleCount = 0;
+  let imageCount = 0;
+  let videoCount = 0;
   let weightedSampleCount = 0;
   for (const entry of entries) {
     const resolvedPath = resolveConfigPath(projectPath, entry.path);
     try {
-      const res = await ipc.invoke('list-images', { dirPath: resolvedPath, limit: 1 });
-      const total = toPositiveNumber(res?.total, 0);
+      const media = await countMediaFiles(resolvedPath);
+      const total = media.total;
       sampleCount += total;
+      imageCount += media.imageTotal;
+      videoCount += media.videoTotal;
       weightedSampleCount += total * entry.repeats;
     } catch (e) {
       console.warn('[TrainingProgress] Failed to count dataset path:', resolvedPath, e);
@@ -115,7 +138,7 @@ export async function estimateTrainingProgress(projectPath: string, trainConfig:
   }
 
   if (weightedSampleCount <= 0) {
-    return { totalSteps: null, source: 'unknown', sampleCount, weightedSampleCount, datasetPath, reason: 'dataset_empty_or_unsupported' };
+    return { totalSteps: null, source: 'unknown', sampleCount, imageCount, videoCount, weightedSampleCount, datasetPath, reason: 'dataset_empty_or_unsupported' };
   }
 
   const epochs = toPositiveNumber(trainConfig.epochs, 1);
@@ -129,6 +152,8 @@ export async function estimateTrainingProgress(projectPath: string, trainConfig:
     totalSteps: Math.max(1, stepsPerEpoch * epochs),
     source: 'dataset_estimate',
     sampleCount,
+    imageCount,
+    videoCount,
     weightedSampleCount,
     datasetPath,
   };

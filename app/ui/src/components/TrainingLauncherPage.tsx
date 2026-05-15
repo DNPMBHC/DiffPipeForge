@@ -233,7 +233,7 @@ export function TrainingLauncherPage({ projectPath }: TrainingLauncherPageProps)
                                         {progressEstimate?.totalSteps ? progressEstimate.totalSteps.toLocaleString() : '--'}
                                     </p>
                                     <p className="text-[10px] text-muted-foreground mt-1">
-                                        {progressEstimate?.source === 'max_steps' ? '来自 max_steps' : progressEstimate?.source === 'dataset_estimate' ? '前端估算' : '等待配置'}
+                                        {progressEstimate?.source === 'max_steps' ? '来自 max_steps' : progressEstimate?.source === 'dataset_estimate' ? '估算' : '等待配置'}
                                     </p>
                                 </div>
                                 <div className="bg-white/5 p-3 rounded-xl border border-white/10">
@@ -242,7 +242,9 @@ export function TrainingLauncherPage({ projectPath }: TrainingLauncherPageProps)
                                         {progressEstimate?.sampleCount !== null && progressEstimate?.sampleCount !== undefined ? progressEstimate.sampleCount.toLocaleString() : '--'}
                                     </p>
                                     <p className="text-[10px] text-muted-foreground mt-1">
-                                        {progressEstimate?.weightedSampleCount ? `重复后 ${progressEstimate.weightedSampleCount.toLocaleString()}` : progressEstimate?.reason || 'max_steps 模式'}
+                                        {progressEstimate?.sampleCount !== null && progressEstimate?.sampleCount !== undefined
+                                            ? `图片 ${progressEstimate.imageCount ?? 0} / 视频 ${progressEstimate.videoCount ?? 0}`
+                                            : progressEstimate?.reason || 'max_steps 模式'}
                                     </p>
                                 </div>
                             </div>

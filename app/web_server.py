@@ -559,6 +559,20 @@ def list_images(payload: dict[str, Any]):
     return {"success": True, "images": images[:limit], "total": len(images)}
 
 
+@channel("list-media")
+def list_media(payload: dict[str, Any]):
+    dir_path = Path(payload.get("dirPath", ""))
+    limit = int(payload.get("limit", 20))
+    if not dir_path.exists():
+        return {"success": True, "files": [], "total": 0, "imageTotal": 0, "videoTotal": 0}
+    image_exts = {".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp", ".tiff"}
+    video_exts = {".mp4", ".mov", ".mkv", ".webm", ".avi", ".m4v", ".wmv"}
+    files = sorted([p for p in dir_path.iterdir() if p.suffix.lower() in image_exts or p.suffix.lower() in video_exts], key=lambda x: str(x).lower())
+    image_total = sum(1 for p in files if p.suffix.lower() in image_exts)
+    video_total = sum(1 for p in files if p.suffix.lower() in video_exts)
+    return {"success": True, "files": [str(p) for p in files[:limit]], "total": len(files), "imageTotal": image_total, "videoTotal": video_total}
+
+
 def image_data_url(file_path: str) -> str:
     path = Path(file_path)
     mime = mimetypes.guess_type(str(path))[0] or "image/png"
